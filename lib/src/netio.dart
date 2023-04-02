@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'response.dart';
 
@@ -22,34 +21,21 @@ class Netio {
 
     if (onReceiveProgress != null) {
       var total = response.contentLength;
-
       var received = 0;
-      var byteStream = response.transform<Uint8List>(StreamTransformer.fromHandlers(handleData: (data, sink) {
+
+      response.listen((data) {
         received += data.length;
-        print(received);
-
-        if (total != -1) {
-          onReceiveProgress(received, total);
-        }
-        sink.add(Uint8List.fromList(data));
-      }));
-
-      var responseBody = await byteStream.toList();
-
-      return Response<T>(
-        statusCode: response.statusCode,
-        data: responseBody.join() as T,
-        headers: response.headers,
-      );
-    } else {
-      var responseBody = await response.transform(utf8.decoder).join();
-
-      return Response<T>(
-        statusCode: response.statusCode,
-        data: responseBody as T,
-        headers: response.headers,
-      );
+        onReceiveProgress(received, total);
+      });
     }
+
+    var responseBody = await response.transform(utf8.decoder).join();
+
+    return Response<T>(
+      statusCode: response.statusCode,
+      data: responseBody as T,
+      headers: response.headers,
+    );
   }
 
   static Future<Response<T>> post<T>(
