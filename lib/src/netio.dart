@@ -19,16 +19,6 @@ class Netio {
     var request = await httpClient.getUrl(url);
     var response = await request.close();
 
-    if (onReceiveProgress != null) {
-      var total = response.contentLength;
-      var received = 0;
-
-      response.listen((data) {
-        received += data.length;
-        onReceiveProgress(received, total);
-      });
-    }
-
     var responseBody = await response.transform(utf8.decoder).join();
 
     return Response<T>(
